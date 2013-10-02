@@ -10,13 +10,15 @@ class X
 {
 public:
 	double Euclidean(X);
-	X& operator*(int);
-	X& operator+(X);
-	X& operator=(X);
+	X operator*(double);
+	X operator-(X);
+	X operator+(X);
+	X operator=(X);
+	void swap(X&);
 	void init();
 	int dimension;
 	vector<double> data; 
-}
+};
 
 class K_Means
 {
@@ -33,13 +35,13 @@ public:
 	int dimension;
 	int nCluster;
 	int nSet;
-	double newfunc, oldfunc£¬threshold;
+	double threshold;
+	double newfunc, oldfunc;
 	vector <int> map;
 	vector <X> matrix;
 	vector <X> vc;
-	vector <int> map;
 	vector <int> nc;
-}
+};
 
 
 

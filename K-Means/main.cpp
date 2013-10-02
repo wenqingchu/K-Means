@@ -8,14 +8,16 @@ int main()
 	int n,m,k;
 	double t;
 	cin >> filename >> n >> m >> k >> t;
-	K_Means * k =new K_Means(filename,n,m,k,t);
-	k->ReadData();
-	k->RandomPartion();
-	k->Lloyd();
-	k->print();
-	k->online();
-	k->print();
-	k->Hartigan();
-	k->print();
+	K_Means * kmeans =new K_Means(filename,n,m,k,t);
+	kmeans->ReadData();
+	kmeans->RandomPartion();
+	kmeans->Lloyd();
+	kmeans->print();
+	kmeans->RandomPartion();
+	kmeans->online();
+	kmeans->print();
+	kmeans->RandomPartion();
+	kmeans->Hartigan();
+	kmeans->print();
 	return 0;
 }
