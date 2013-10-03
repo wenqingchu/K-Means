@@ -9,7 +9,7 @@ double X::Euclidean(X x)
 	for(int i=1; i<=dimension; i++){
 		re += (data[i] - x.data[i])*(data[i] - x.data[i]);
 	}
-	return re/2;
+	return sqrt(re);
 }
 
 void X::init()
@@ -84,8 +84,10 @@ K_Means::K_Means(string s, int n, int m, int k, double t)
 
 }
 
+
 void K_Means::ReadData()
 {
+	/*
 	ifstream infile(filename.c_str(), ios::in);
 
 	for(int i=1; i<=nSet; i++){
@@ -94,6 +96,7 @@ void K_Means::ReadData()
 		}
 	}
 	infile.close();
+	*/
 }
 
 void K_Means::RandomPartion()
@@ -114,62 +117,29 @@ double K_Means::TargetFunc()
 {
 	double re = 0;
 	for(int i=1; i<=nSet; i++){
-		re += matrix[i].Euclidean(vc[map[i]]);
+		re += (matrix[i].Euclidean(vc[map[i]])) * (matrix[i].Euclidean(vc[map[i]]));
 	}
-	return re/nSet;
+	return re/(2*nSet);
 }
 
-void K_Means::Lloyd()
+void K_Means::Normalize()
 {
-	bool isFirst = true;
-	newfunc = oldfunc = -1;
-	for(int i=1; i<=nCluster; i++){
-		vc[i] = matrix[i];
-	}
-	while(abs(newfunc-oldfunc) >= threshold || isFirst)
-	{
-		double distance;
-		int indexCluster;
-		oldfunc = newfunc;
-		for(int i=1; i<=nCluster; i++){
-			nc[i] = 0;
+	double norm;
+	for(int i=1; i<=nSet; i++){
+		norm = 0;
+		for(int j =1; j<=dimension; j++){
+			norm += matrix[i].data[j]*matrix[i].data[j];
+		}
+		norm = sqrt(norm);
+		for(int j =1; j<=dimension; j++){
+			matrix[i].data[j] = matrix[i].data[j] / norm;
 		}
 
-		for(int i=1; i<=nSet; i++){
-			indexCluster = 1;
-			distance = matrix[i].Euclidean(vc[1]);
-			for(int j=2; j<=nCluster; j++){
-				if(distance > matrix[i].Euclidean(vc[j])){
-					distance = matrix[i].Euclidean(vc[j]);
-					indexCluster = j;
-				}
-			}
-			map[i] = indexCluster;
-			nc[indexCluster]++;
-		}
-		for(int i=1; i<=nCluster; i++){
-			vc[i].init();
-		}
-		for(int i=1; i<=nSet; i++){
-			vc[map[i]] = vc[map[i]] + matrix[i];
-		}
-		for(int i=1; i<=nCluster; i++){
-			vc[i] = vc[i]*(1.0/nc[i]);
-		}
-		
-		newfunc = TargetFunc();
-		if(isFirst){
-			isFirst = false;// maybe error!!
-		}
 	}
 }
 
-void K_Means::online()
+void K_Means::assign()
 {
-	bool notDone = true;
-	for(int i=1; i<=nCluster; i++){
-		vc[i] = matrix[i];
-	}
 	for(int i=1; i<=nCluster; i++){
 		nc[i] = 0;
 	}
@@ -185,6 +155,10 @@ void K_Means::online()
 		map[i] = indexCluster;
 		nc[indexCluster]++;
 	}
+}
+
+void K_Means::update()
+{
 	for(int i=1; i<=nCluster; i++){
 		vc[i].init();
 	}
@@ -192,9 +166,44 @@ void K_Means::online()
 		vc[map[i]] = vc[map[i]] + matrix[i];
 	}
 	for(int i=1; i<=nCluster; i++){
-		vc[i] = vc[i]*(1.0/nc[i]);
+		vc[i] = vc[i]*(1.0/nc[i]);    // nc[i] maybe zero
 	}
 
+}
+
+void K_Means::Lloyd()
+{
+	bool isFirst = true;
+	newfunc = oldfunc = -1;
+	for(int i=1; i<=nCluster; i++){
+		vc[i] = matrix[i];
+	}
+	while(abs(newfunc-oldfunc) >= threshold || isFirst)
+	{
+		oldfunc = newfunc;
+
+		assign();
+	
+		update();
+
+		newfunc = TargetFunc();
+
+		if(isFirst){
+			isFirst = false;// maybe error!!
+		}
+	}
+}
+
+void K_Means::online()
+{
+	bool notDone = true;
+	for(int i=1; i<=nCluster; i++){
+		vc[i] = matrix[i];
+	}
+
+	assign();
+
+	update();
 
 	while(notDone){
 		RandomPartion();
@@ -236,30 +245,9 @@ void K_Means::Hartigan()
 	for(int i=1; i<=nCluster; i++){
 		vc[i] = matrix[i];
 	}
-	for(int i=1; i<=nCluster; i++){
-		nc[i] = 0;
-	}
-	for(int i=1; i<=nSet; i++){
-		int indexCluster = 1;
-		double distance = matrix[i].Euclidean(vc[1]);
-		for(int j=2; j<=nCluster; j++){
-			if(distance > matrix[i].Euclidean(vc[j])){
-				distance = matrix[i].Euclidean(vc[j]);
-				indexCluster = j;
-			}
-		}
-		map[i] = indexCluster;
-		nc[indexCluster]++;
-	}
-	for(int i=1; i<=nCluster; i++){
-		vc[i].init();
-	}
-	for(int i=1; i<=nSet; i++){
-		vc[map[i]] = vc[map[i]] + matrix[i];
-	}
-	for(int i=1; i<=nCluster; i++){
-		vc[i] = vc[i]*(1.0/nc[i]);
-	}
+	assign();
+
+	update();
 
 
 	while(notDone){
@@ -304,8 +292,9 @@ void K_Means::Hartigan()
 	newfunc = TargetFunc();
 }
 
-void K_Means::print()
+void K_Means::print(string s)
 {
 	cout << "filename:  " << filename ;
-	cout << "              result: " << newfunc << endl;
+	cout << "        method: " << s ;
+	cout << "        result: " << newfunc << endl;
 }

@@ -25,9 +25,12 @@ class K_Means
 public:
 	K_Means(string s, int n, int m, int k, double t);
 	void ReadData();
+	void Normalize();
 	void RandomPartion();
 	double TargetFunc();
-	void print();
+	void print(string);
+	void assign();
+	void update();
 	void Lloyd();
 	void online();
 	void Hartigan();
